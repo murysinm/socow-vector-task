@@ -1,9 +1,10 @@
-#include "gtest/gtest.h"
 #include "socow-vector.h"
+
+#include <gtest/gtest.h>
 
 #include <unordered_set>
 
-template struct socow_vector<int, 2>;
+template class socow_vector<int, 2>;
 
 template <typename T>
 const T& as_const(T& obj) {

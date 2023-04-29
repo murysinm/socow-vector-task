@@ -5,7 +5,10 @@ set(CMAKE_CXX_STANDARD 20)
 
 find_package(GTest REQUIRED)
 
-add_executable(tests tests.cpp)
+file(GLOB TEST_SRC test/*.cpp)
+add_executable(tests ${TEST_SRC})
+
+target_include_directories(tests PRIVATE src test)
 
 if (MSVC)
   target_compile_options(tests PRIVATE /W4 /permissive-)
