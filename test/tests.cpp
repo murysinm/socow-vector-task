@@ -1,133 +1,19 @@
+#include "element.h"
 #include "socow-vector.h"
 
 #include <gtest/gtest.h>
 
-#include <unordered_set>
-
 template class socow_vector<int, 2>;
+template class socow_vector<element, 2>;
+template class socow_vector<std::string, 2>;
 
-template <typename T>
-const T& as_const(T& obj) {
-  return obj;
-}
+using std::as_const;
 
-template <typename T>
-struct element {
-  element() {
-    add_instance();
-  }
-
-  element(const T& val) : val(val) {
-    add_instance();
-  }
-
-  element(const element& rhs) : val(rhs.val) {
-    copy();
-    add_instance();
-  }
-
-  element& operator=(const element& rhs) {
-    assert_exists();
-    rhs.assert_exists();
-    copy();
-    val = rhs.val;
-    return *this;
-  }
-
-  ~element() {
-    delete_instance();
-  }
-
-  static std::unordered_set<const element*>& instances() {
-    static std::unordered_set<const element*> instances;
-    return instances;
-  }
-
-  static void expect_no_instances() {
-    if (!instances().empty()) {
-      instances().clear();
-      FAIL() << "not all instances are destroyed";
-    }
-  }
-
-  static void set_throw_countdown(size_t val) {
-    throw_countdown = val;
-  }
-
-  static void set_copy_counter(size_t val) {
-    copy_counter = val;
-  }
-
-  static size_t get_copy_counter() {
-    return copy_counter;
-  }
-
-  friend bool operator==(const element& a, const element& b) {
-    a.assert_exists();
-    b.assert_exists();
-
-    return a.val == b.val;
-  }
-
-  friend bool operator!=(const element& a, const element& b) {
-    a.assert_exists();
-    b.assert_exists();
-
-    return a.val != b.val;
-  }
-
-private:
-  void add_instance() {
-    auto p = instances().insert(this);
-    if (!p.second) {
-      FAIL() << "a new object is created at the address " << static_cast<void*>(this)
-             << " while the previous object at this address was not "
-                "destroyed";
-    }
-  }
-
-  void delete_instance() {
-    size_t erased = instances().erase(this);
-    if (erased != 1) {
-      FAIL() << "attempt of destroying non-existing object at address " << static_cast<void*>(this);
-    }
-  }
-
-  void assert_exists() const {
-    const std::unordered_set<const element*>& inst = instances();
-    bool exists = inst.find(this) != inst.end();
-    if (!exists) {
-      FAIL() << "accessing an non-existsing object at address " << static_cast<const void*>(this);
-    }
-  }
-
-  void copy() {
-    ++copy_counter;
-    if (throw_countdown != 0) {
-      --throw_countdown;
-      if (throw_countdown == 0) {
-        throw std::runtime_error("copy failed");
-      }
-    }
-  }
-
-private:
-  T val;
-  static size_t throw_countdown;
-  static size_t copy_counter;
-};
-
-template <typename T>
-size_t element<T>::throw_countdown = 0;
-
-template <typename T>
-size_t element<T>::copy_counter = 0;
-
-using container = socow_vector<element<size_t>, 2>;
+using container = socow_vector<element, 2>;
 
 TEST(correctness, default_ctor) {
   container a;
-  element<size_t>::expect_no_instances();
+  element::expect_no_instances();
   EXPECT_TRUE(a.empty());
   EXPECT_EQ(0, a.size());
 }
@@ -145,7 +31,7 @@ TEST(correctness, push_back) {
     }
   }
 
-  element<size_t>::expect_no_instances();
+  element::expect_no_instances();
 }
 
 TEST(correctness, push_back_from_self) {
@@ -162,7 +48,7 @@ TEST(correctness, push_back_from_self) {
     }
   }
 
-  element<size_t>::expect_no_instances();
+  element::expect_no_instances();
 }
 
 TEST(correctness, subscription) {
@@ -212,14 +98,14 @@ TEST(correctness, data) {
   }
 
   {
-    element<size_t>* ptr = a.data();
+    element* ptr = a.data();
     for (size_t i = 0; i != N; ++i) {
       EXPECT_EQ(2 * i + 1, ptr[i]);
     }
   }
 
   {
-    const element<size_t>* cptr = as_const(a).data();
+    const element* cptr = as_const(a).data();
     for (size_t i = 0; i != N; ++i) {
       EXPECT_EQ(2 * i + 1, cptr[i]);
     }
@@ -231,7 +117,7 @@ TEST(correctness, data_2) {
   v.push_back(3);
   v.push_back(7);
 
-  element<size_t>* data = v.data();
+  element* data = v.data();
   EXPECT_EQ(3, data[0]);
   EXPECT_EQ(7, data[1]);
 }
@@ -241,7 +127,7 @@ TEST(correctness, data_3) {
   v.push_back(3);
   v.push_back(7);
 
-  const element<size_t>* data = as_const(v).data();
+  const element* data = as_const(v).data();
   EXPECT_EQ(3, data[0]);
   EXPECT_EQ(7, data[1]);
 }
@@ -285,16 +171,16 @@ TEST(correctness, capacity) {
     a.shrink_to_fit();
     EXPECT_EQ(N - 1, a.capacity());
   }
-  element<size_t>::expect_no_instances();
+  element::expect_no_instances();
 }
 
 TEST(correctness, capacity_2) {
-  socow_vector<element<size_t>, 3> a;
+  socow_vector<element, 3> a;
   EXPECT_EQ(3, a.capacity());
 }
 
 TEST(correctness, capacity_3) {
-  socow_vector<element<size_t>, 3> a;
+  socow_vector<element, 3> a;
   a.reserve(2);
   EXPECT_EQ(3, a.capacity());
 }
@@ -317,16 +203,16 @@ TEST(correctness, reserve) {
 
 TEST(correctness, reserve_2) {
   {
-    socow_vector<element<size_t>, 3> a;
+    socow_vector<element, 3> a;
     a.reserve(10);
     for (size_t i = 0; i != 5; ++i) {
       a.push_back(i + 100);
     }
 
-    socow_vector<element<size_t>, 3> b = a;
+    socow_vector<element, 3> b = a;
     b.reserve(3);
   }
-  element<size_t>::expect_no_instances();
+  element::expect_no_instances();
 }
 
 TEST(correctness, superfluous_reserve) {
@@ -338,7 +224,7 @@ TEST(correctness, superfluous_reserve) {
     a.reserve(K);
     EXPECT_GE(a.capacity(), N);
   }
-  element<size_t>::expect_no_instances();
+  element::expect_no_instances();
 }
 
 TEST(correctness, clear) {
@@ -352,11 +238,11 @@ TEST(correctness, clear) {
   a.clear();
   EXPECT_EQ(c, a.capacity());
 
-  element<size_t>::expect_no_instances();
+  element::expect_no_instances();
 }
 
 TEST(correctness, clear_2) {
-  socow_vector<element<size_t>, 3> a;
+  socow_vector<element, 3> a;
 
   for (size_t i = 0; i != 2; ++i) {
     a.push_back(i + 100);
@@ -367,7 +253,7 @@ TEST(correctness, clear_2) {
   EXPECT_EQ(0, a.size());
   EXPECT_TRUE(a.empty());
 
-  element<size_t>::expect_no_instances();
+  element::expect_no_instances();
 }
 
 TEST(correctness, superfluous_shrink_to_fit) {
@@ -379,11 +265,11 @@ TEST(correctness, superfluous_shrink_to_fit) {
     for (size_t i = 0; i != c; ++i) {
       a.push_back(2 * i + 1);
     }
-    element<size_t>* old_data = a.data();
+    element* old_data = a.data();
     a.shrink_to_fit();
     EXPECT_EQ(old_data, a.data());
   }
-  element<size_t>::expect_no_instances();
+  element::expect_no_instances();
 }
 
 TEST(correctness, shrink_to_fit) {
@@ -400,7 +286,7 @@ TEST(correctness, shrink_to_fit) {
 }
 
 TEST(correctness, shrink_to_fit_2) {
-  socow_vector<element<size_t>, 2> a;
+  socow_vector<element, 2> a;
   a.push_back(123);
   a.shrink_to_fit();
   EXPECT_EQ(1, a.size());
@@ -420,7 +306,7 @@ TEST(correctness, copy_ctor) {
       EXPECT_EQ(i, b[i]);
     }
   }
-  element<size_t>::expect_no_instances();
+  element::expect_no_instances();
 }
 
 TEST(correctness, assignment_operator) {
@@ -441,7 +327,7 @@ TEST(correctness, assignment_operator) {
       EXPECT_EQ(2 * i + 1, tmp);
     }
   }
-  element<size_t>::expect_no_instances();
+  element::expect_no_instances();
 }
 
 TEST(correctness, self_assignment) {
@@ -457,7 +343,7 @@ TEST(correctness, self_assignment) {
       EXPECT_EQ(2 * i + 1, a[i]);
     }
   }
-  element<size_t>::expect_no_instances();
+  element::expect_no_instances();
 }
 
 TEST(correctness, pop_back) {
@@ -474,7 +360,7 @@ TEST(correctness, pop_back) {
     a.pop_back();
   }
   EXPECT_TRUE(a.empty());
-  element<size_t>::expect_no_instances();
+  element::expect_no_instances();
 }
 
 TEST(correctness, pop_back_2) {
@@ -491,16 +377,16 @@ TEST(correctness, pop_back_2) {
 }
 
 TEST(correctness, pop_back_3) {
-  socow_vector<element<size_t>, 3> a;
+  socow_vector<element, 3> a;
   a.push_back(41);
   a.push_back(43);
   a.push_back(47);
   a.push_back(51);
   a.pop_back();
 
-  socow_vector<element<size_t>, 3> b = a;
+  socow_vector<element, 3> b = a;
   try {
-    element<size_t>::set_throw_countdown(2);
+    element::set_throw_countdown(2);
     a.pop_back();
   } catch (const std::runtime_error&) {
     EXPECT_EQ(3, a.size());
@@ -510,7 +396,7 @@ TEST(correctness, pop_back_3) {
     return;
   }
 
-  element<size_t>::set_throw_countdown(0);
+  element::set_throw_countdown(0);
 
   EXPECT_EQ(2, a.size());
   EXPECT_EQ(41, a[0]);
@@ -529,7 +415,7 @@ TEST(correctness, insert_begin) {
     EXPECT_EQ(i, a.back());
     a.pop_back();
   }
-  element<size_t>::expect_no_instances();
+  element::expect_no_instances();
 }
 
 TEST(correctness, insert_end) {
@@ -552,7 +438,7 @@ TEST(correctness, insert_end) {
       EXPECT_EQ(2 * i + 1, a[i]);
     }
   }
-  element<size_t>::expect_no_instances();
+  element::expect_no_instances();
 }
 
 TEST(performance, insert) {
@@ -609,7 +495,7 @@ TEST(correctness, erase) {
       }
     }
   }
-  element<size_t>::expect_no_instances();
+  element::expect_no_instances();
 }
 
 TEST(correctness, erase_begin) {
@@ -629,7 +515,7 @@ TEST(correctness, erase_begin) {
       EXPECT_EQ(2 * (i + N) + 1, a[i]);
     }
   }
-  element<size_t>::expect_no_instances();
+  element::expect_no_instances();
 }
 
 TEST(correctness, erase_end) {
@@ -649,7 +535,7 @@ TEST(correctness, erase_end) {
       EXPECT_EQ(2 * i + 1, a[i]);
     }
   }
-  element<size_t>::expect_no_instances();
+  element::expect_no_instances();
 }
 
 TEST(correctness, erase_range_begin) {
@@ -667,7 +553,7 @@ TEST(correctness, erase_range_begin) {
       EXPECT_EQ(2 * (i + K) + 1, a[i]);
     }
   }
-  element<size_t>::expect_no_instances();
+  element::expect_no_instances();
 }
 
 TEST(correctness, erase_range_middle) {
@@ -688,7 +574,7 @@ TEST(correctness, erase_range_middle) {
       EXPECT_EQ(2 * (i + N - K) + 1, a[i + K]);
     }
   }
-  element<size_t>::expect_no_instances();
+  element::expect_no_instances();
 }
 
 TEST(correctness, erase_range_end) {
@@ -706,7 +592,7 @@ TEST(correctness, erase_range_end) {
     }
   }
 
-  element<size_t>::expect_no_instances();
+  element::expect_no_instances();
 }
 
 TEST(correctness, erase_range_all) {
@@ -723,7 +609,7 @@ TEST(correctness, erase_range_all) {
     EXPECT_TRUE(a.empty());
   }
 
-  element<size_t>::expect_no_instances();
+  element::expect_no_instances();
 }
 
 TEST(correctness, erase_big_range) {
@@ -737,7 +623,7 @@ TEST(correctness, erase_big_range) {
       c.clear();
     }
   }
-  element<size_t>::expect_no_instances();
+  element::expect_no_instances();
 }
 
 TEST(correctness, erase_1) {
@@ -788,10 +674,10 @@ TEST(correctness, reallocation_throw) {
     for (size_t i = 0; i != n; ++i) {
       a.push_back(i);
     }
-    element<size_t>::set_throw_countdown(7);
+    element::set_throw_countdown(7);
     EXPECT_THROW(a.push_back(42), std::runtime_error);
   }
-  element<size_t>::expect_no_instances();
+  element::expect_no_instances();
 }
 
 // This test actually checks memory leak in pair with @valgrind
@@ -802,13 +688,13 @@ TEST(correctness, copy_throw) {
   for (size_t i = 0; i != n; ++i) {
     a.push_back(i);
   }
-  element<size_t>::set_throw_countdown(7);
+  element::set_throw_countdown(7);
   EXPECT_NO_THROW({ container b(a); });
-  element<size_t>::set_throw_countdown(0);
+  element::set_throw_countdown(0);
 }
 
 TEST(correctness, iter_types) {
-  using el_t = element<size_t>;
+  using el_t = element;
   using vec_t = socow_vector<el_t, 2>;
   bool test1 = std::is_same<el_t*, typename vec_t::iterator>::value;
   bool test2 = std::is_same<const el_t*, typename vec_t::const_iterator>::value;
@@ -843,9 +729,9 @@ TEST(correctness_cow, subscript_single_user) {
     a.push_back(i + 100);
   }
 
-  element<size_t>::set_copy_counter(0);
+  element::reset_copy_counter();
   a[3] = 42;
-  EXPECT_EQ(1, element<size_t>::get_copy_counter());
+  element::expect_copy_counter(1);
 }
 
 TEST(correctness_cow, subscript_const) {
@@ -876,9 +762,9 @@ TEST(correctness_cow, data_single_user) {
     a.push_back(i + 100);
   }
 
-  element<size_t>::set_copy_counter(0);
+  element::reset_copy_counter();
   a.data()[3] = 42;
-  EXPECT_EQ(1, element<size_t>::get_copy_counter());
+  element::expect_copy_counter(1);
 }
 
 TEST(correctness_cow, data_const) {
@@ -888,7 +774,7 @@ TEST(correctness_cow, data_const) {
   }
 
   container b = a;
-  as_const(b).data()[3];
+  EXPECT_EQ(103, as_const(b).data()[3]);
   EXPECT_EQ(as_const(a).data(), as_const(b).data());
 }
 
@@ -909,9 +795,9 @@ TEST(correctness_cow, front_single_user) {
     a.push_back(i + 100);
   }
 
-  element<size_t>::set_copy_counter(0);
+  element::reset_copy_counter();
   a.front() = 42;
-  EXPECT_EQ(1, element<size_t>::get_copy_counter());
+  element::expect_copy_counter(1);
 }
 
 TEST(correctness_cow, front_const) {
@@ -942,9 +828,9 @@ TEST(correctness_cow, back_single_user) {
     a.push_back(i + 100);
   }
 
-  element<size_t>::set_copy_counter(0);
+  element::reset_copy_counter();
   a.back() = 42;
-  EXPECT_EQ(1, element<size_t>::get_copy_counter());
+  element::expect_copy_counter(1);
 }
 
 TEST(correctness_cow, back_const) {
@@ -988,7 +874,7 @@ TEST(correctness_cow, pop_back) {
   EXPECT_EQ(3, a.size());
   EXPECT_EQ(4, b.size());
 
-  element<size_t> t = b[3];
+  element t = b[3];
   EXPECT_EQ(103, t);
 }
 
@@ -1060,9 +946,9 @@ TEST(correctness_cow, begin_single_user) {
     a.push_back(i + 100);
   }
 
-  element<size_t>::set_copy_counter(0);
+  element::reset_copy_counter();
   *a.begin() = 42;
-  EXPECT_EQ(1, element<size_t>::get_copy_counter());
+  element::expect_copy_counter(1);
 }
 
 TEST(correctness_cow, begin_const) {
@@ -1093,9 +979,9 @@ TEST(correctness_cow, end_single_user) {
     a.push_back(i + 100);
   }
 
-  element<size_t>::set_copy_counter(0);
+  element::reset_copy_counter();
   *std::prev(a.end()) = 42;
-  EXPECT_EQ(1, element<size_t>::get_copy_counter());
+  element::expect_copy_counter(1);
 }
 
 TEST(correctness_cow, end_const) {
@@ -1178,7 +1064,7 @@ TEST(correctness_cow, erase_single_user) {
 }
 
 TEST(small_object, shrink_to_fit) {
-  socow_vector<element<size_t>, 3> a;
+  socow_vector<element, 3> a;
   a.reserve(5);
   for (size_t i = 0; i != 5; ++i) {
     a.push_back(i + 100);
@@ -1193,7 +1079,7 @@ TEST(small_object, shrink_to_fit) {
 }
 
 TEST(small_object, shrink_to_fit_2) {
-  socow_vector<element<size_t>, 3> a;
+  socow_vector<element, 3> a;
   a.reserve(5);
   for (size_t i = 0; i != 5; ++i) {
     a.push_back(i + 100);
@@ -1203,7 +1089,7 @@ TEST(small_object, shrink_to_fit_2) {
   }
 
   EXPECT_LE(5, a.capacity());
-  element<size_t>::set_throw_countdown(2);
+  element::set_throw_countdown(2);
   EXPECT_THROW(a.shrink_to_fit(), std::runtime_error);
   EXPECT_EQ(5, a.capacity());
   EXPECT_EQ(2, a.size());
@@ -1212,11 +1098,11 @@ TEST(small_object, shrink_to_fit_2) {
 }
 
 TEST(small_object, swap_two_small) {
-  socow_vector<element<size_t>, 3> a;
+  socow_vector<element, 3> a;
   a.push_back(1);
   a.push_back(2);
 
-  socow_vector<element<size_t>, 3> b;
+  socow_vector<element, 3> b;
   b.push_back(3);
 
   a.swap(b);
@@ -1237,13 +1123,13 @@ TEST(small_object, swap_two_small) {
 }
 
 TEST(small_object, swap_big_and_small) {
-  socow_vector<element<size_t>, 3> a;
+  socow_vector<element, 3> a;
   a.push_back(1);
   a.push_back(2);
   a.push_back(3);
   a.push_back(4);
 
-  socow_vector<element<size_t>, 3> b;
+  socow_vector<element, 3> b;
   b.push_back(5);
 
   a.swap(b);
@@ -1268,17 +1154,17 @@ TEST(small_object, swap_big_and_small) {
 }
 
 TEST(small_object, swap_big_and_small_2) {
-  socow_vector<element<size_t>, 3> a;
+  socow_vector<element, 3> a;
   a.push_back(1);
   a.push_back(2);
   a.push_back(3);
   a.push_back(4);
 
-  socow_vector<element<size_t>, 3> b;
+  socow_vector<element, 3> b;
   b.push_back(5);
   b.push_back(6);
 
-  element<size_t>::set_throw_countdown(2);
+  element::set_throw_countdown(2);
   EXPECT_THROW(a.swap(b), std::runtime_error);
 
   EXPECT_EQ(4, a.size());
@@ -1292,13 +1178,13 @@ TEST(small_object, swap_big_and_small_2) {
 }
 
 TEST(small_object, swap_two_big) {
-  socow_vector<element<size_t>, 3> a;
+  socow_vector<element, 3> a;
   a.push_back(1);
   a.push_back(2);
   a.push_back(3);
   a.push_back(4);
 
-  socow_vector<element<size_t>, 3> b;
+  socow_vector<element, 3> b;
   b.push_back(5);
   b.push_back(6);
   b.push_back(7);
@@ -1321,7 +1207,7 @@ TEST(small_object, swap_two_big) {
 }
 
 TEST(small_object, begin_end) {
-  socow_vector<element<size_t>, 3> a;
+  socow_vector<element, 3> a;
   a.push_back(1);
   a.push_back(2);
   auto it = a.begin();
@@ -1333,7 +1219,7 @@ TEST(small_object, begin_end) {
 }
 
 TEST(small_object, begin_end_const) {
-  socow_vector<element<size_t>, 3> a;
+  socow_vector<element, 3> a;
   a.push_back(1);
   a.push_back(2);
   auto it = as_const(a).begin();
@@ -1345,7 +1231,7 @@ TEST(small_object, begin_end_const) {
 }
 
 TEST(small_object, big_empty_range) {
-  socow_vector<element<size_t>, 3> a;
+  socow_vector<element, 3> a;
   a.push_back(1);
   a.push_back(2);
   a.push_back(3);
@@ -1359,37 +1245,37 @@ TEST(small_object, big_empty_range) {
 }
 
 TEST(small_object, erase_big_into_small) {
-  socow_vector<element<size_t>, 3> a;
+  socow_vector<element, 3> a;
   for (size_t i = 0; i != 5; ++i) {
     a.push_back(i + 100);
   }
 
-  socow_vector<element<size_t>, 3> b = a;
+  socow_vector<element, 3> b = a;
 
   auto it = a.erase(as_const(a).begin() + 1, as_const(a).end() - 1);
   EXPECT_TRUE(it == as_const(a).begin() + 1);
 }
 
 TEST(small_object, erase_big_into_small_2) {
-  socow_vector<element<size_t>, 3> a;
+  socow_vector<element, 3> a;
   for (size_t i = 0; i != 6; ++i) {
     a.push_back(i + 100);
   }
 
-  socow_vector<element<size_t>, 3> b = a;
+  socow_vector<element, 3> b = a;
 
-  element<size_t>::set_throw_countdown(2);
+  element::set_throw_countdown(2);
   EXPECT_THROW(a.erase(as_const(a).begin() + 2, as_const(a).end() - 1), std::runtime_error);
 }
 
 TEST(small_object, erase_big_into_small_3) {
-  socow_vector<element<size_t>, 3> a;
+  socow_vector<element, 3> a;
   for (size_t i = 0; i != 6; ++i) {
     a.push_back(i + 100);
   }
 
-  socow_vector<element<size_t>, 3> b = a;
+  socow_vector<element, 3> b = a;
 
-  element<size_t>::set_throw_countdown(3);
+  element::set_throw_countdown(3);
   EXPECT_THROW(a.erase(as_const(a).begin() + 2, as_const(a).end() - 1), std::runtime_error);
 }
