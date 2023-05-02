@@ -7,10 +7,6 @@
 
 class element {
 public:
-  element() {
-    add_instance();
-  }
-
   element(size_t val) : val(val) {
     add_instance();
   }
@@ -32,28 +28,43 @@ public:
     delete_instance();
   }
 
+  void swap(element& other) {
+    swap();
+    std::swap(val, other.val);
+  }
+
   static std::unordered_set<const element*>& instances() {
     static std::unordered_set<const element*> instances;
     return instances;
   }
 
-  static void expect_no_instances() {
+  // TODO [maybe] return bool, assert in place
+  static void assert_no_instances() {
     if (!instances().empty()) {
       instances().clear();
       FAIL() << "Not all instances are destroyed";
     }
   }
 
-  static void reset_copy_counter() {
+  static void reset_counters() {
     copy_counter = 0;
+    swap_counter = 0;
   }
 
-  static void expect_copy_counter(size_t expected_count) {
-    ASSERT_EQ(expected_count, copy_counter);
+  static size_t get_copy_counter() {
+    return copy_counter;
   }
 
-  static void set_throw_countdown(size_t val) {
-    throw_countdown = val;
+  static size_t get_swap_counter() {
+    return swap_counter;
+  }
+
+  static void set_copy_throw_countdown(size_t value) {
+    copy_throw_countdown = value;
+  }
+
+  static void set_swap_throw_countdown(size_t value) {
+    swap_throw_countdown = value;
   }
 
   friend bool operator==(const element& a, const element& b) {
@@ -100,10 +111,18 @@ private:
 
   void copy() {
     ++copy_counter;
-    if (throw_countdown != 0) {
-      --throw_countdown;
-      if (throw_countdown == 0) {
+    if (copy_throw_countdown != 0) {
+      if (--copy_throw_countdown == 0) {
         throw std::runtime_error("copy failed");
+      }
+    }
+  }
+
+  void swap() {
+    ++swap_counter;
+    if (swap_throw_countdown != 0) {
+      if (--swap_throw_countdown == 0) {
+        throw std::runtime_error("swap failed");
       }
     }
   }
@@ -111,6 +130,13 @@ private:
 private:
   size_t val;
 
-  inline static size_t throw_countdown = 0;
+  inline static size_t copy_throw_countdown = 0;
+  inline static size_t swap_throw_countdown = 0;
   inline static size_t copy_counter = 0;
+  inline static size_t swap_counter = 0;
 };
+
+template <>
+inline void std::swap(element& left, element& right) {
+  left.swap(right);
+}
