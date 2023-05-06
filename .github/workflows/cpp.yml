@@ -91,7 +91,7 @@ jobs:
 
       - name: Test main
         run: |
-          if [[ -n ${{ env.TESTS_UPDATED }} ]]; then
+          if [[ ${{ env.TESTS_UPDATED }} -eq 1 ]]; then
             echo -ne '\e[0;33mWARNING: Tests were not updated on your side. '
             echo -e 'This script will however run the most recent version.\e[0m'
           fi
