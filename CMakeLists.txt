@@ -37,7 +37,7 @@ elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   target_compile_options(tests PRIVATE -Wshadow-uncaptured-local)
   target_compile_options(tests PRIVATE -Wloop-analysis)
   target_compile_options(tests PRIVATE -Wno-self-assign-overloaded)
-  target_compile_options(tests PRIVATE -Wpedantic -Wno-flexible-array-extensions)
+  target_compile_options(tests PRIVATE -Wpedantic -Wno-flexible-array-extensions -Wno-zero-length-array)
 endif()
 
 option(USE_SANITIZERS "Enable to build with undefined,leak and address sanitizers" OFF)
