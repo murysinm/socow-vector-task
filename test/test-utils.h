@@ -12,45 +12,47 @@ template class socow_vector<int, 3>;
 template class socow_vector<element, 3>;
 using container = socow_vector<element, 3>;
 
-template <size_t... SMALL_SIZES>
+template <class... Ts>
 class immutable_guard {
 public:
-  explicit immutable_guard(const socow_vector<element, SMALL_SIZES>&... as) : guards(as...) {}
+  explicit immutable_guard(const Ts&... objects) : guards(objects...) {}
 
   immutable_guard(const immutable_guard&) = delete;
 
 private:
-  template <size_t SMALL_SIZE>
-  class single_immutable_guard {
-  public:
-    explicit single_immutable_guard(const socow_vector<element, SMALL_SIZE>& a)
-        : a(a),
-          old_capacity(a.capacity()),
-          old_data(a.data()),
-          old_a(a) {}
+  std::tuple<immutable_guard<Ts>...> guards;
+};
 
-    ~single_immutable_guard() {
-      destruct();
-    }
+template <size_t SMALL_SIZE>
+class immutable_guard<socow_vector<element, SMALL_SIZE>> {
+public:
+  explicit immutable_guard(const socow_vector<element, SMALL_SIZE>& a)
+      : a(a),
+        old_capacity(a.capacity()),
+        old_data(a.data()),
+        old_a(a) {}
 
-    void destruct() {
-      ASSERT_EQ(old_a.size(), a.size());
-      ASSERT_EQ(old_capacity, a.capacity());
-      ASSERT_EQ(old_data, a.data());
-      for (size_t i = 0; i < old_a.size(); ++i) {
-        ASSERT_EQ(old_a[i], a[i]);
-      }
-    }
+  immutable_guard(const immutable_guard&) = delete;
 
-  private:
-    const socow_vector<element, SMALL_SIZE>& a;
-    size_t old_capacity;
-    const element* old_data;
-    const socow_vector<element, SMALL_SIZE> old_a;
-  };
+  ~immutable_guard() {
+    destruct();
+  }
 
 private:
-  std::tuple<single_immutable_guard<SMALL_SIZES>...> guards;
+  void destruct() const {
+    ASSERT_EQ(old_a.size(), a.size());
+    ASSERT_EQ(old_capacity, a.capacity());
+    ASSERT_EQ(old_data, a.data());
+    for (size_t i = 0; i < old_a.size(); ++i) {
+      ASSERT_EQ(old_a[i], a[i]);
+    }
+  }
+
+private:
+  const socow_vector<element, SMALL_SIZE>& a;
+  size_t old_capacity;
+  const element* old_data;
+  socow_vector<element, SMALL_SIZE> old_a;
 };
 
 class base_test : public ::testing::Test {
