@@ -274,10 +274,11 @@ TEST_F(small_object_test, copy_assignment_small_to_small_throw) {
     EXPECT_THROW(b = a, std::runtime_error);
   }
 
+  immutable_guard g(a, b);
+
+  element::set_copy_throw_countdown(4);
   element::set_swap_throw_countdown(1);
-  try {
-    b = a;
-  } catch (const std::runtime_error&) {}
+  EXPECT_THROW(b = a, std::runtime_error);
 }
 
 TEST_F(small_object_test, copy_assignment_small_to_small_2) {
@@ -317,10 +318,11 @@ TEST_F(small_object_test, copy_assignment_small_to_small_2_throw) {
     EXPECT_THROW(b = a, std::runtime_error);
   }
 
+  immutable_guard g(a, b);
+
+  element::set_copy_throw_countdown(4);
   element::set_swap_throw_countdown(1);
-  try {
-    b = a;
-  } catch (const std::runtime_error&) {}
+  EXPECT_THROW(b = a, std::runtime_error);
 }
 
 TEST_F(small_object_test, copy_assignment_small_to_big) {
