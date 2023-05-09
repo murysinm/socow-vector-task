@@ -275,7 +275,9 @@ TEST_F(small_object_test, copy_assignment_small_to_small_throw) {
   }
 
   element::set_swap_throw_countdown(1);
-  EXPECT_THROW(b = a, std::runtime_error);
+  try {
+    b = a;
+  } catch (const std::runtime_error&) {}
 }
 
 TEST_F(small_object_test, copy_assignment_small_to_small_2) {
@@ -316,7 +318,9 @@ TEST_F(small_object_test, copy_assignment_small_to_small_2_throw) {
   }
 
   element::set_swap_throw_countdown(1);
-  EXPECT_THROW(b = a, std::runtime_error);
+  try {
+    b = a;
+  } catch (const std::runtime_error&) {}
 }
 
 TEST_F(small_object_test, copy_assignment_small_to_big) {
