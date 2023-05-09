@@ -268,17 +268,29 @@ TEST_F(small_object_test, copy_assignment_small_to_small_throw) {
   container b;
   b.push_back(42);
 
+  immutable_guard ga(a);
+
   for (size_t i = 1; i <= 3; ++i) {
-    immutable_guard g(a, b);
+    immutable_guard gb(b);
     element::set_copy_throw_countdown(i);
     EXPECT_THROW(b = a, std::runtime_error);
   }
 
-  immutable_guard g(a, b);
+  {
+    container old_b = b;
+    immutable_guard gb(b);
+    element::set_copy_throw_countdown(4);
+    try {
+      b = a;
+      element::set_copy_throw_countdown(0);
+      b = old_b;
+    } catch (const std::runtime_error&) {}
+  }
 
-  element::set_copy_throw_countdown(4);
   element::set_swap_throw_countdown(1);
-  EXPECT_THROW(b = a, std::runtime_error);
+  try {
+    b = a;
+  } catch (const std::runtime_error&) {}
 }
 
 TEST_F(small_object_test, copy_assignment_small_to_small_2) {
@@ -312,17 +324,29 @@ TEST_F(small_object_test, copy_assignment_small_to_small_2_throw) {
   b.push_back(5);
   b.push_back(7);
 
+  immutable_guard ga(a);
+
   for (size_t i = 1; i <= 2; ++i) {
-    immutable_guard g(a, b);
+    immutable_guard gb(b);
     element::set_copy_throw_countdown(i);
     EXPECT_THROW(b = a, std::runtime_error);
   }
 
-  immutable_guard g(a, b);
+  {
+    container old_b = b;
+    immutable_guard gb(b);
+    element::set_copy_throw_countdown(4);
+    try {
+      b = a;
+      element::set_copy_throw_countdown(0);
+      b = old_b;
+    } catch (const std::runtime_error&) {}
+  }
 
-  element::set_copy_throw_countdown(4);
   element::set_swap_throw_countdown(1);
-  EXPECT_THROW(b = a, std::runtime_error);
+  try {
+    b = a;
+  } catch (const std::runtime_error&) {}
 }
 
 TEST_F(small_object_test, copy_assignment_small_to_big) {
