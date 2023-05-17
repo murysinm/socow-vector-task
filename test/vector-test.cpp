@@ -75,6 +75,50 @@ TEST_F(vector_test, push_back_reallocation_copies) {
   EXPECT_GE(N + 1, element::get_copy_counter() + element::get_swap_counter());
 }
 
+TEST_F(vector_test, push_back_throw) {
+  constexpr size_t N = 500;
+
+  container a;
+  a.reserve(N + 1);
+  for (size_t i = 0; i < N; ++i) {
+    a.push_back(2 * i + 1);
+  }
+
+  element::set_copy_throw_countdown(7);
+  EXPECT_NO_THROW(a.push_back(42));
+
+  element::set_swap_throw_countdown(7);
+  EXPECT_THROW(a.push_back(42), std::runtime_error);
+}
+
+TEST_F(vector_test, push_back_reallocation_throw) {
+  constexpr size_t N = 500;
+
+  container a;
+  a.reserve(N);
+  for (size_t i = 0; i < N; ++i) {
+    a.push_back(2 * i + 1);
+  }
+
+  immutable_guard g(a);
+  element::set_copy_throw_countdown(N - 1);
+  EXPECT_THROW(a.push_back(42), std::runtime_error);
+}
+
+TEST_F(vector_test, push_back_reallocation_throw_last_copy) {
+  constexpr size_t N = 500;
+
+  container a;
+  a.reserve(N);
+  for (size_t i = 0; i < N; ++i) {
+    a.push_back(2 * i + 1);
+  }
+
+  immutable_guard g(a);
+  element::set_copy_throw_countdown(N + 1);
+  EXPECT_THROW(a.push_back(42), std::runtime_error);
+}
+
 TEST_F(vector_test, subscript) {
   constexpr size_t N = 500, K = 100;
 
@@ -545,16 +589,13 @@ TEST_F(vector_test, insert_copies) {
 
   container a;
   a.reserve(N + 1);
-  for (size_t i = 0; i < K; ++i) {
-    a.push_back(2 * i + 1);
-  }
-  for (size_t i = K + 1; i < N + 1; ++i) {
+  for (size_t i = 0; i < N; ++i) {
     a.push_back(2 * i + 1);
   }
   ASSERT_EQ(N, a.size());
 
   element::reset_counters();
-  a.insert(a.begin() + K, 2 * K + 1);
+  a.insert(a.begin() + K, 42);
   EXPECT_GE(N - K + 1, element::get_copy_counter() + element::get_swap_counter());
 }
 
@@ -563,16 +604,13 @@ TEST_F(vector_test, insert_reallocation_copies) {
 
   container a;
   a.reserve(N);
-  for (size_t i = 0; i < K; ++i) {
-    a.push_back(2 * i + 1);
-  }
-  for (size_t i = K + 1; i < N + 1; ++i) {
+  for (size_t i = 0; i < N; ++i) {
     a.push_back(2 * i + 1);
   }
   ASSERT_EQ(N, a.size());
 
   element::reset_counters();
-  a.insert(a.begin() + K, 2 * K + 1);
+  a.insert(a.begin() + K, 42);
   EXPECT_GE(N + 1, element::get_copy_counter() + element::get_swap_counter());
 }
 
@@ -580,17 +618,17 @@ TEST_F(vector_test, insert_throw) {
   constexpr size_t N = 500, K = 100;
 
   container a;
-  a.reserve(N + 1);
-  for (size_t i = 0; i < K; ++i) {
-    a.push_back(2 * i + 1);
-  }
-  for (size_t i = K + 1; i < N + 1; ++i) {
+  a.reserve(N + 2);
+  for (size_t i = 0; i < N; ++i) {
     a.push_back(2 * i + 1);
   }
   ASSERT_EQ(N, a.size());
 
   element::set_copy_throw_countdown(7);
-  EXPECT_NO_THROW(a.insert(a.begin() + K, 2 * K + 1));
+  EXPECT_NO_THROW(a.insert(a.begin() + K, 42));
+
+  element::set_swap_throw_countdown(7);
+  EXPECT_THROW(a.insert(a.begin() + K, 42), std::runtime_error);
 }
 
 TEST_F(vector_test, erase_begin) {
@@ -792,38 +830,6 @@ TEST_F(vector_test, erase_range_throw) {
 
   element::set_copy_throw_countdown(7);
   EXPECT_NO_THROW(a.erase(a.begin() + K, a.end() - K));
-}
-
-TEST_F(vector_test, reallocation_throw) {
-  constexpr size_t N = 10;
-
-  container a;
-  a.reserve(N);
-  ASSERT_EQ(N, a.capacity());
-
-  for (size_t i = 0; i < N; ++i) {
-    a.push_back(2 * i + 1);
-  }
-
-  immutable_guard g(a);
-  element::set_copy_throw_countdown(N - 1);
-  EXPECT_THROW(a.push_back(42), std::runtime_error);
-}
-
-TEST_F(vector_test, last_copy_at_reallocation_throw) {
-  constexpr size_t N = 10;
-
-  container a;
-  a.reserve(N);
-  ASSERT_EQ(N, a.capacity());
-
-  for (size_t i = 0; i < N; ++i) {
-    a.push_back(2 * i + 1);
-  }
-
-  immutable_guard g(a);
-  element::set_copy_throw_countdown(N + 1);
-  EXPECT_THROW(a.push_back(42), std::runtime_error);
 }
 
 // This test actually checks memory leak in pair with @valgrind
