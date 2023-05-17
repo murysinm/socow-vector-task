@@ -42,6 +42,58 @@ TEST_F(small_object_test, push_back_throw) {
   }
 }
 
+TEST_F(small_object_test, push_back_copies) {
+  container a;
+
+  element::reset_counters();
+
+  for (size_t i = 0; i < 3; ++i) {
+    a.push_back(i + 100);
+  }
+
+  EXPECT_EQ(3, element::get_copy_counter());
+  EXPECT_EQ(0, element::get_swap_counter());
+}
+
+TEST_F(small_object_test, push_back_small_into_big) {
+  container a;
+
+  for (size_t i = 0; i < 4; ++i) {
+    a.push_back(i + 100);
+  }
+
+  ASSERT_EQ(4, a.size());
+  ASSERT_LE(4, a.capacity());
+
+  for (size_t i = 0; i < 4; ++i) {
+    EXPECT_EQ(i + 100, a[i]);
+  }
+}
+
+TEST_F(small_object_test, push_back_small_into_big_copies) {
+  container a;
+
+  for (size_t i = 0; i < 3; ++i) {
+    a.push_back(i + 100);
+  }
+
+  expect_static_storage(a);
+
+  element::reset_counters();
+
+  a.push_back(103);
+
+  ASSERT_EQ(4, a.size());
+  ASSERT_LE(4, a.capacity());
+
+  EXPECT_EQ(4, element::get_copy_counter());
+  EXPECT_EQ(0, element::get_swap_counter());
+
+  for (size_t i = 0; i < 4; ++i) {
+    EXPECT_EQ(i + 100, a[i]);
+  }
+}
+
 TEST_F(small_object_test, pop_back) {
   container a;
   a.push_back(3);
