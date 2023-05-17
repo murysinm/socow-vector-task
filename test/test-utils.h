@@ -30,7 +30,9 @@ public:
       : a(a),
         old_capacity(a.capacity()),
         old_data(a.data()),
-        old_a(a) {}
+        old_a(a) {
+    old_a.data();
+  }
 
   immutable_guard(const immutable_guard&) = delete;
 
