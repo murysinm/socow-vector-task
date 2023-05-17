@@ -325,18 +325,24 @@ TEST_F(small_object_test, copy_assignment_small_to_small_throw) {
   for (size_t i = 1; i <= 3; ++i) {
     immutable_guard gb(b);
     element::set_copy_throw_countdown(i);
+    element::reset_counters();
     EXPECT_THROW(b = a, std::runtime_error);
+    EXPECT_GE(i, element::get_copy_counter());
+    EXPECT_EQ(0, element::get_swap_counter());
   }
 
   {
     container old_b = b;
     immutable_guard gb(b);
     element::set_copy_throw_countdown(4);
+    element::reset_counters();
     try {
       b = a;
       element::set_copy_throw_countdown(0);
       b = old_b;
-    } catch (const std::runtime_error&) {}
+    } catch (const std::runtime_error&) {
+      EXPECT_EQ(0, element::get_swap_counter());
+    }
   }
 
   element::set_swap_throw_countdown(1);
@@ -381,18 +387,24 @@ TEST_F(small_object_test, copy_assignment_small_to_small_2_throw) {
   for (size_t i = 1; i <= 2; ++i) {
     immutable_guard gb(b);
     element::set_copy_throw_countdown(i);
+    element::reset_counters();
     EXPECT_THROW(b = a, std::runtime_error);
+    EXPECT_GE(i, element::get_copy_counter());
+    EXPECT_EQ(0, element::get_swap_counter());
   }
 
   {
     container old_b = b;
     immutable_guard gb(b);
     element::set_copy_throw_countdown(4);
+    element::reset_counters();
     try {
       b = a;
       element::set_copy_throw_countdown(0);
       b = old_b;
-    } catch (const std::runtime_error&) {}
+    } catch (const std::runtime_error&) {
+      EXPECT_EQ(0, element::get_swap_counter());
+    }
   }
 
   element::set_swap_throw_countdown(1);
@@ -435,7 +447,10 @@ TEST_F(small_object_test, copy_assignment_small_to_big_throw) {
   for (size_t i = 1; i <= 2; ++i) {
     immutable_guard g(a, b);
     element::set_copy_throw_countdown(i);
+    element::reset_counters();
     EXPECT_THROW(b = a, std::runtime_error);
+    EXPECT_GE(i, element::get_copy_counter());
+    EXPECT_EQ(0, element::get_swap_counter());
   }
 }
 
@@ -768,12 +783,18 @@ TEST_F(small_object_test, swap_two_small_throw) {
   {
     immutable_guard g(a, b);
     element::set_copy_throw_countdown(2);
+    element::reset_counters();
     EXPECT_THROW(a.swap(b), std::runtime_error);
+    EXPECT_GE(1, element::get_copy_counter());
+    EXPECT_EQ(0, element::get_swap_counter());
   }
   {
     immutable_guard g(a, b);
     element::set_copy_throw_countdown(2);
+    element::reset_counters();
     EXPECT_THROW(b.swap(a), std::runtime_error);
+    EXPECT_GE(1, element::get_copy_counter());
+    EXPECT_EQ(0, element::get_swap_counter());
   }
 
   element::set_copy_throw_countdown(3);
@@ -832,12 +853,18 @@ TEST_F(small_object_test, swap_big_and_small_throw) {
   {
     immutable_guard g(a, b);
     element::set_copy_throw_countdown(2);
+    element::reset_counters();
     EXPECT_THROW(a.swap(b), std::runtime_error);
+    EXPECT_GE(1, element::get_copy_counter());
+    EXPECT_EQ(0, element::get_swap_counter());
   }
   {
     immutable_guard g(a, b);
     element::set_copy_throw_countdown(2);
+    element::reset_counters();
     EXPECT_THROW(b.swap(a), std::runtime_error);
+    EXPECT_GE(1, element::get_copy_counter());
+    EXPECT_EQ(0, element::get_swap_counter());
   }
 }
 

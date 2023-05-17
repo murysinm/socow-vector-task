@@ -110,21 +110,21 @@ private:
   }
 
   void copy() {
-    ++copy_counter;
     if (copy_throw_countdown != 0) {
       if (--copy_throw_countdown == 0) {
         throw std::runtime_error("copy failed");
       }
     }
+    ++copy_counter;
   }
 
   void swap() {
-    ++swap_counter;
     if (swap_throw_countdown != 0) {
       if (--swap_throw_countdown == 0) {
         throw std::runtime_error("swap failed");
       }
     }
+    ++swap_counter;
   }
 
 private:
