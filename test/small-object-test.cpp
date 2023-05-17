@@ -829,9 +829,16 @@ TEST_F(small_object_test, swap_big_and_small_throw) {
   b.push_back(5);
   b.push_back(6);
 
-  immutable_guard g(a, b);
-  element::set_copy_throw_countdown(2);
-  EXPECT_THROW(a.swap(b), std::runtime_error);
+  {
+    immutable_guard g(a, b);
+    element::set_copy_throw_countdown(2);
+    EXPECT_THROW(a.swap(b), std::runtime_error);
+  }
+  {
+    immutable_guard g(a, b);
+    element::set_copy_throw_countdown(2);
+    EXPECT_THROW(b.swap(a), std::runtime_error);
+  }
 }
 
 TEST_F(small_object_test, begin_end) {
