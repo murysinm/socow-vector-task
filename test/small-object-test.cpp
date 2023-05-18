@@ -657,6 +657,21 @@ TEST_F(small_object_test, clear_small) {
   }
 }
 
+TEST_F(small_object_test, clear_small_throw) {
+  container a;
+  for (size_t i = 0; i < 5; ++i) {
+    a.push_back(i + 100);
+  }
+  ASSERT_EQ(5, a.size());
+  ASSERT_LE(5, a.capacity());
+
+  element::set_copy_throw_countdown(1);
+  element::set_swap_throw_countdown(1);
+  EXPECT_NO_THROW(a.clear());
+  EXPECT_TRUE(a.empty());
+  element::assert_no_instances();
+}
+
 TEST_F(small_object_test, clear_big_into_small) {
   container a;
   for (size_t i = 0; i < 5; ++i) {
@@ -700,39 +715,6 @@ TEST_F(small_object_test, clear_big_into_small_single_user) {
   EXPECT_EQ(0, a.size());
   EXPECT_EQ(old_capacity, a.capacity());
   EXPECT_EQ(old_data, a.data());
-}
-
-TEST_F(small_object_test, clear_big_into_small_throw) {
-  container a;
-  for (size_t i = 0; i < 5; ++i) {
-    a.push_back(i + 100);
-  }
-  ASSERT_EQ(5, a.size());
-  ASSERT_LE(5, a.capacity());
-
-  size_t shrinks = 0;
-
-  for (size_t i = 1; i <= 5; ++i) {
-    container b = a;
-    element::set_copy_throw_countdown(i);
-    try {
-      b.clear();
-      expect_empty_storage(b);
-    } catch (const std::runtime_error&) {
-      ++shrinks;
-      EXPECT_TRUE(a.empty());
-      ASSERT_EQ(0, b.size());
-      EXPECT_EQ(a.capacity(), b.capacity());
-      EXPECT_EQ(as_const(a).data(), as_const(b).data());
-    }
-    element::set_copy_throw_countdown(0);
-  }
-
-  EXPECT_EQ(0, shrinks % 5);
-
-  for (size_t i = 0; i < 5; ++i) {
-    ASSERT_EQ(100 + i, a[i]);
-  }
 }
 
 TEST_F(small_object_test, swap_two_small) {

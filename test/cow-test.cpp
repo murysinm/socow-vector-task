@@ -581,6 +581,24 @@ TEST_F(cow_test, clear) {
   element::assert_no_instances();
 }
 
+TEST_F(cow_test, clear_throw) {
+  container a;
+  for (size_t i = 0; i < 5; ++i) {
+    a.push_back(i + 100);
+  }
+
+  {
+    container b = a;
+    immutable_guard gb(b);
+
+    element::set_copy_throw_countdown(1);
+    element::set_swap_throw_countdown(1);
+    EXPECT_NO_THROW(a.clear());
+    EXPECT_TRUE(a.empty());
+  }
+  element::assert_no_instances();
+}
+
 TEST_F(cow_test, begin) {
   container a;
   for (size_t i = 0; i < 5; ++i) {

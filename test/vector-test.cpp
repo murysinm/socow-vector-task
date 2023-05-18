@@ -381,6 +381,22 @@ TEST_F(vector_test, clear) {
   EXPECT_EQ(old_data, a.data());
 }
 
+TEST_F(vector_test, clear_throw) {
+  constexpr size_t N = 500;
+
+  container a;
+  for (size_t i = 0; i < N; ++i) {
+    a.push_back(2 * i + 1);
+  }
+  ASSERT_EQ(N, a.size());
+
+  element::set_copy_throw_countdown(1);
+  element::set_swap_throw_countdown(1);
+  EXPECT_NO_THROW(a.clear());
+  EXPECT_TRUE(a.empty());
+  element::assert_no_instances();
+}
+
 TEST_F(vector_test, swap_two_big) {
   container a;
   a.push_back(1);
