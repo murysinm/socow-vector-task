@@ -360,16 +360,43 @@ TEST_F(cow_test, push_back_throw) {
 
   for (size_t i = 1; i <= 6; ++i) {
     container b = a;
-    immutable_guard g(a);
+    immutable_guard g(a, b);
 
     element::set_copy_throw_countdown(i);
     EXPECT_THROW(b.push_back(42), std::runtime_error);
-
-    ASSERT_EQ(5, b.size());
-    for (size_t j = 0; j < 5; ++j) {
-      ASSERT_EQ(j + 100, as_const(b)[j]);
-    }
   }
+}
+
+TEST_F(cow_test, push_back_reallocation_throw) {
+  container a;
+  a.reserve(5);
+  for (size_t i = 0; i < 5; ++i) {
+    a.push_back(i + 100);
+  }
+
+  for (size_t i = 1; i <= 6; ++i) {
+    container b = a;
+    immutable_guard g(a, b);
+
+    element::set_copy_throw_countdown(i);
+    EXPECT_THROW(b.push_back(42), std::runtime_error);
+  }
+}
+
+TEST_F(cow_test, push_back_copies) {
+  container a;
+  a.reserve(6);
+  for (size_t i = 0; i < 5; ++i) {
+    a.push_back(i + 100);
+  }
+
+  container b = a;
+
+  element::reset_counters();
+  a.push_back(42);
+  EXPECT_GE(6, element::get_copy_counter() + element::get_swap_counter());
+
+  EXPECT_EQ(42, as_const(a).back());
 }
 
 TEST_F(cow_test, pop_back) {
@@ -721,15 +748,26 @@ TEST_F(cow_test, insert_throw) {
 
   for (size_t i = 1; i <= 6; ++i) {
     container b = a;
-    immutable_guard g(a);
+    immutable_guard g(a, b);
 
     element::set_copy_throw_countdown(i);
-    EXPECT_THROW(a.insert(as_const(a).begin() + 2, 42), std::runtime_error);
+    EXPECT_THROW(b.insert(as_const(b).begin() + 2, 42), std::runtime_error);
+  }
+}
 
-    ASSERT_EQ(5, b.size());
-    for (size_t j = 0; j < 5; ++j) {
-      ASSERT_EQ(j + 100, as_const(b)[j]);
-    }
+TEST_F(cow_test, insert_reallocation_throw) {
+  container a;
+  a.reserve(5);
+  for (size_t i = 0; i < 5; ++i) {
+    a.push_back(i + 100);
+  }
+
+  for (size_t i = 1; i <= 6; ++i) {
+    container b = a;
+    immutable_guard g(a, b);
+
+    element::set_copy_throw_countdown(i);
+    EXPECT_THROW(b.insert(as_const(b).begin() + 2, 42), std::runtime_error);
   }
 }
 
@@ -744,8 +782,7 @@ TEST_F(cow_test, insert_copies) {
 
   element::reset_counters();
   a.insert(as_const(a).begin() + 2, 42);
-  EXPECT_GE(11, element::get_copy_counter());
-  EXPECT_EQ(0, element::get_swap_counter());
+  EXPECT_GE(11, element::get_copy_counter() + element::get_swap_counter());
 
   EXPECT_EQ(42, as_const(a)[2]);
 }
