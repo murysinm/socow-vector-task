@@ -399,6 +399,22 @@ TEST_F(cow_test, push_back_copies) {
   EXPECT_EQ(42, as_const(a).back());
 }
 
+TEST_F(cow_test, push_back_reallocation_copies) {
+  container a;
+  a.reserve(5);
+  for (size_t i = 0; i < 5; ++i) {
+    a.push_back(i + 100);
+  }
+
+  container b = a;
+
+  element::reset_counters();
+  a.push_back(42);
+  EXPECT_GE(6, element::get_copy_counter() + element::get_swap_counter());
+
+  EXPECT_EQ(42, as_const(a).back());
+}
+
 TEST_F(cow_test, pop_back) {
   container a;
   for (size_t i = 0; i < 5; ++i) {
@@ -774,6 +790,22 @@ TEST_F(cow_test, insert_reallocation_throw) {
 TEST_F(cow_test, insert_copies) {
   container a;
   a.reserve(11);
+  for (size_t i = 0; i < 10; ++i) {
+    a.push_back(i + 100);
+  }
+
+  container b = a;
+
+  element::reset_counters();
+  a.insert(as_const(a).begin() + 2, 42);
+  EXPECT_GE(11, element::get_copy_counter() + element::get_swap_counter());
+
+  EXPECT_EQ(42, as_const(a)[2]);
+}
+
+TEST_F(cow_test, insert_reallocation_copies) {
+  container a;
+  a.reserve(10);
   for (size_t i = 0; i < 10; ++i) {
     a.push_back(i + 100);
   }
