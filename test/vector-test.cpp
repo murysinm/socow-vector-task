@@ -105,7 +105,7 @@ TEST_F(vector_test, push_back_reallocation_throw) {
   EXPECT_THROW(a.push_back(42), std::runtime_error);
 }
 
-TEST_F(vector_test, push_back_reallocation_throw_last_copy) {
+TEST_F(vector_test, push_back_reallocation_throw_last) {
   constexpr size_t N = 500;
 
   container a;
@@ -653,6 +653,40 @@ TEST_F(vector_test, insert_throw) {
 
   element::set_swap_throw_countdown(7);
   EXPECT_THROW(a.insert(a.begin() + K, 42), std::runtime_error);
+}
+
+TEST_F(vector_test, insert_reallocation_throw) {
+  constexpr size_t N = 500, K = 100;
+
+  container a;
+  a.reserve(N);
+  for (size_t i = 0; i < N; ++i) {
+    a.push_back(2 * i + 1);
+  }
+  ASSERT_EQ(N, a.size());
+
+  {
+    immutable_guard g(a);
+    element::set_copy_throw_countdown(N - 1);
+    EXPECT_THROW(a.insert(a.begin() + K, 42), std::runtime_error);
+  }
+}
+
+TEST_F(vector_test, insert_reallocation_throw_last) {
+  constexpr size_t N = 500, K = 100;
+
+  container a;
+  a.reserve(N);
+  for (size_t i = 0; i < N; ++i) {
+    a.push_back(2 * i + 1);
+  }
+  ASSERT_EQ(N, a.size());
+
+  {
+    immutable_guard g(a);
+    element::set_copy_throw_countdown(N + 1);
+    EXPECT_THROW(a.insert(a.begin() + K, 42), std::runtime_error);
+  }
 }
 
 TEST_F(vector_test, erase_begin) {

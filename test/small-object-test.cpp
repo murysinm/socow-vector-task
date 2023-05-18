@@ -118,7 +118,11 @@ TEST_F(small_object_test, pop_back_big_into_small) {
 
   container b = a;
 
+  element::reset_counters();
   a.pop_back();
+  EXPECT_GE(3, element::get_copy_counter());
+  EXPECT_EQ(0, element::get_swap_counter());
+
   EXPECT_EQ(3, a.size());
 }
 
@@ -145,31 +149,14 @@ TEST_F(small_object_test, pop_back_big_into_small_throw) {
   }
   ASSERT_EQ(4, a.size());
 
-  size_t shrinks = 0;
+  immutable_guard ga(a);
 
   for (size_t i = 1; i <= 3; ++i) {
     container b = a;
+    immutable_guard gb(b);
+
     element::set_copy_throw_countdown(i);
-    try {
-      b.pop_back();
-      ASSERT_EQ(3, b.size());
-      expect_static_storage(b);
-    } catch (const std::runtime_error&) {
-      ++shrinks;
-      ASSERT_EQ(a.size(), b.size());
-      EXPECT_EQ(a.capacity(), b.capacity());
-      EXPECT_EQ(3 + 100, as_const(b).back());
-    }
-    element::set_copy_throw_countdown(0);
-    for (size_t j = 0; j < 3; ++j) {
-      ASSERT_EQ(j + 100, b[j]);
-    }
-  }
-
-  EXPECT_EQ(0, shrinks % 3);
-
-  for (size_t i = 0; i < 4; ++i) {
-    ASSERT_EQ(100 + i, a[i]);
+    EXPECT_THROW(b.pop_back(), std::runtime_error);
   }
 }
 
@@ -1022,34 +1009,29 @@ TEST_F(small_object_test, erase_big_into_small_throw) {
     a.push_back(i + 100);
   }
 
-  size_t shrinks = 0;
+  immutable_guard ga(a);
 
   for (size_t i = 1; i <= 3; ++i) {
     container b = a;
+    immutable_guard gb(b);
+
     element::set_copy_throw_countdown(i);
-    try {
-      b.erase(as_const(b).begin() + 2, as_const(b).end() - 1);
-      ASSERT_EQ(3, b.size());
-      expect_static_storage(b);
-    } catch (const std::runtime_error&) {
-      ++shrinks;
-      ASSERT_EQ(a.size(), b.size());
-      EXPECT_EQ(a.capacity(), b.capacity());
-      ASSERT_EQ(100, b[0]);
-      ASSERT_EQ(101, b[1]);
-      ASSERT_EQ(105, b[5]);
-    }
-    element::set_copy_throw_countdown(0);
-    for (size_t j = 2; j < 5; ++j) {
-      ASSERT_EQ(j + 100, b[j]);
-    }
+    EXPECT_THROW(b.erase(as_const(b).begin() + 2, as_const(b).end() - 1), std::runtime_error);
+  }
+}
+
+TEST_F(small_object_test, erase_big_into_small_copies) {
+  container a;
+  for (size_t i = 0; i < 5; ++i) {
+    a.push_back(i + 100);
   }
 
-  EXPECT_EQ(0, shrinks % 3);
+  container b = a;
 
-  for (size_t i = 0; i < 6; ++i) {
-    ASSERT_EQ(100 + i, a[i]);
-  }
+  element::reset_counters();
+  a.erase(as_const(a).begin() + 2, as_const(a).end() - 1);
+  EXPECT_GE(3, element::get_copy_counter());
+  EXPECT_EQ(0, element::get_swap_counter());
 }
 
 TEST_F(small_object_test, insert_empty) {

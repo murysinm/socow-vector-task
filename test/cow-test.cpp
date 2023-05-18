@@ -353,16 +353,22 @@ TEST_F(cow_test, push_back) {
 
 TEST_F(cow_test, push_back_throw) {
   container a;
-  a.reserve(5);
+  a.reserve(6);
   for (size_t i = 0; i < 5; ++i) {
     a.push_back(i + 100);
   }
 
   for (size_t i = 1; i <= 6; ++i) {
     container b = a;
-    immutable_guard g(a, b);
+    immutable_guard g(a);
+
     element::set_copy_throw_countdown(i);
     EXPECT_THROW(b.push_back(42), std::runtime_error);
+
+    ASSERT_EQ(5, b.size());
+    for (size_t j = 0; j < 5; ++j) {
+      ASSERT_EQ(j + 100, as_const(b)[j]);
+    }
   }
 }
 
@@ -374,7 +380,10 @@ TEST_F(cow_test, pop_back) {
 
   container b = a;
 
+  element::reset_counters();
   a.pop_back();
+  EXPECT_GE(4, element::get_copy_counter());
+  EXPECT_EQ(0, element::get_swap_counter());
 
   EXPECT_EQ(4, a.size());
   EXPECT_EQ(5, b.size());
@@ -680,17 +689,14 @@ TEST_F(cow_test, insert) {
   a.push_back(104);
 
   container b = a;
+  immutable_guard g(b);
+
   auto it = a.insert(as_const(a).begin() + 2, 102);
   EXPECT_EQ(as_const(a).begin() + 2, it);
 
   for (size_t i = 0; i < 5; ++i) {
     EXPECT_EQ(i + 100, as_const(a)[i]);
   }
-
-  EXPECT_EQ(100, b[0]);
-  EXPECT_EQ(101, b[1]);
-  EXPECT_EQ(103, b[2]);
-  EXPECT_EQ(104, b[3]);
 }
 
 TEST_F(cow_test, insert_single_user) {
@@ -706,6 +712,44 @@ TEST_F(cow_test, insert_single_user) {
   EXPECT_EQ(old_data, as_const(a).data());
 }
 
+TEST_F(cow_test, insert_throw) {
+  container a;
+  a.reserve(6);
+  for (size_t i = 0; i < 5; ++i) {
+    a.push_back(i + 100);
+  }
+
+  for (size_t i = 1; i <= 6; ++i) {
+    container b = a;
+    immutable_guard g(a);
+
+    element::set_copy_throw_countdown(i);
+    EXPECT_THROW(a.insert(as_const(a).begin() + 2, 42), std::runtime_error);
+
+    ASSERT_EQ(5, b.size());
+    for (size_t j = 0; j < 5; ++j) {
+      ASSERT_EQ(j + 100, as_const(b)[j]);
+    }
+  }
+}
+
+TEST_F(cow_test, insert_copies) {
+  container a;
+  a.reserve(11);
+  for (size_t i = 0; i < 10; ++i) {
+    a.push_back(i + 100);
+  }
+
+  container b = a;
+
+  element::reset_counters();
+  a.insert(as_const(a).begin() + 2, 42);
+  EXPECT_GE(11, element::get_copy_counter());
+  EXPECT_EQ(0, element::get_swap_counter());
+
+  EXPECT_EQ(42, as_const(a)[2]);
+}
+
 TEST_F(cow_test, erase) {
   container a;
   a.reserve(10);
@@ -716,18 +760,14 @@ TEST_F(cow_test, erase) {
   a.push_back(103);
 
   container b = a;
+  immutable_guard g(b);
+
   auto it = a.erase(as_const(a).begin() + 2);
   EXPECT_EQ(as_const(a).begin() + 2, it);
 
   for (size_t i = 0; i < 4; ++i) {
     EXPECT_EQ(i + 100, as_const(a)[i]);
   }
-
-  EXPECT_EQ(100, b[0]);
-  EXPECT_EQ(101, b[1]);
-  EXPECT_EQ(200, b[2]);
-  EXPECT_EQ(102, b[3]);
-  EXPECT_EQ(103, b[4]);
 }
 
 TEST_F(cow_test, erase_single_user) {
@@ -752,7 +792,21 @@ TEST_F(cow_test, erase_throw) {
 
   immutable_guard g(a, b);
   element::set_copy_throw_countdown(2);
-  EXPECT_THROW(b.erase(as_const(b).begin() + 2), std::runtime_error);
+  EXPECT_THROW(a.erase(as_const(a).begin() + 2), std::runtime_error);
+}
+
+TEST_F(cow_test, erase_copies) {
+  container a;
+  for (size_t i = 0; i < 10; ++i) {
+    a.push_back(i + 100);
+  }
+
+  container b = a;
+
+  element::reset_counters();
+  a.erase(as_const(a).begin() + 3, as_const(a).end() - 1);
+  EXPECT_GE(4, element::get_copy_counter());
+  EXPECT_GE(0, element::get_swap_counter());
 }
 
 TEST_F(cow_test, unshare_throw) {
