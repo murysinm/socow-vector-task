@@ -504,7 +504,11 @@ TEST_F(cow_test, shrink_to_fit) {
 
   container b = a;
 
+  element::reset_counters();
   a.shrink_to_fit();
+  EXPECT_GE(5, element::get_copy_counter());
+  EXPECT_EQ(0, element::get_swap_counter());
+
   EXPECT_EQ(5, a.size());
   EXPECT_EQ(5, a.capacity());
   EXPECT_NE(as_const(a).data(), as_const(b).data());

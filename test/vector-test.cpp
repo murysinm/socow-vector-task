@@ -308,7 +308,11 @@ TEST_F(vector_test, shrink_to_fit) {
     ASSERT_EQ(2 * i + 1, a[i]);
   }
 
+  element::reset_counters();
   a.shrink_to_fit();
+  EXPECT_GE(M, element::get_copy_counter());
+  EXPECT_EQ(0, element::get_swap_counter());
+
   EXPECT_EQ(M, a.size());
   EXPECT_EQ(M, a.capacity());
 
@@ -333,7 +337,11 @@ TEST_F(vector_test, shrink_to_fit_superfluous) {
   size_t old_capacity = a.capacity();
   element* old_data = a.data();
 
+  element::reset_counters();
   a.shrink_to_fit();
+  EXPECT_EQ(0, element::get_copy_counter());
+  EXPECT_EQ(0, element::get_swap_counter());
+
   EXPECT_EQ(N, a.size());
   EXPECT_EQ(old_capacity, a.capacity());
   EXPECT_EQ(old_data, a.data());

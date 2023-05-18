@@ -592,9 +592,14 @@ TEST_F(small_object_test, shrink_to_fit_small) {
       EXPECT_EQ(size, a.size());
       expect_static_storage(a);
 
+      element::reset_counters();
+
       a.shrink_to_fit();
       EXPECT_EQ(size, a.size());
       expect_static_storage(a);
+
+      EXPECT_GE(size, element::get_copy_counter());
+      EXPECT_EQ(0, element::get_swap_counter());
     }
   }
 }
@@ -608,7 +613,11 @@ TEST_F(small_object_test, shrink_to_fit_big_into_small) {
   ASSERT_EQ(2, a.size());
   ASSERT_EQ(5, a.capacity());
 
+  element::reset_counters();
   a.shrink_to_fit();
+  EXPECT_GE(2, element::get_copy_counter());
+  EXPECT_EQ(0, element::get_swap_counter());
+
   expect_static_storage(a);
   EXPECT_EQ(2, a.size());
 }
