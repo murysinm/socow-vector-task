@@ -342,6 +342,10 @@ TEST_F(vector_test, shrink_to_fit_superfluous) {
   EXPECT_EQ(N, a.size());
   EXPECT_EQ(old_capacity, a.capacity());
   EXPECT_EQ(old_data, a.data());
+
+  for (size_t i = 0; i < N; ++i) {
+    ASSERT_EQ(2 * i + 1, a[i]);
+  }
 }
 
 TEST_F(vector_test, shrink_to_fit_empty) {

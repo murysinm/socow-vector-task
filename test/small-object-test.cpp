@@ -587,6 +587,10 @@ TEST_F(small_object_test, shrink_to_fit_small) {
 
       EXPECT_GE(size, element::get_copy_counter());
       EXPECT_EQ(0, element::get_swap_counter());
+
+      for (size_t j = 0; j < size; ++j) {
+        ASSERT_EQ(j + 101, a[j]);
+      }
     }
   }
 }
@@ -607,6 +611,9 @@ TEST_F(small_object_test, shrink_to_fit_big_into_small) {
 
   expect_static_storage(a);
   EXPECT_EQ(2, a.size());
+
+  EXPECT_EQ(42, a[0]);
+  EXPECT_EQ(43, a[1]);
 }
 
 TEST_F(small_object_test, shrink_to_fit_big_into_small_throw) {
