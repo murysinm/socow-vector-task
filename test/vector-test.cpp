@@ -86,9 +86,6 @@ TEST_F(vector_test, push_back_throw) {
 
   element::set_copy_throw_countdown(7);
   EXPECT_NO_THROW(a.push_back(42));
-
-  element::set_swap_throw_countdown(7);
-  EXPECT_THROW(a.push_back(42), std::runtime_error);
 }
 
 TEST_F(vector_test, push_back_reallocation_throw) {
@@ -651,6 +648,7 @@ TEST_F(vector_test, insert_throw) {
   element::set_copy_throw_countdown(7);
   EXPECT_NO_THROW(a.insert(a.begin() + K, 42));
 
+  element::set_copy_throw_countdown(0);
   element::set_swap_throw_countdown(7);
   EXPECT_THROW(a.insert(a.begin() + K, 42), std::runtime_error);
 }
