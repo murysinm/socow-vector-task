@@ -740,9 +740,6 @@ TEST_F(small_object_test, swap_two_small) {
   EXPECT_EQ(1, a[0]);
   EXPECT_EQ(2, a[1]);
   EXPECT_EQ(3, b[0]);
-
-  element::set_swap_throw_countdown(1);
-  EXPECT_THROW(a.swap(b), std::runtime_error);
 }
 
 TEST_F(small_object_test, swap_two_small_throw) {
@@ -780,6 +777,9 @@ TEST_F(small_object_test, swap_two_small_throw) {
 
   element::set_copy_throw_countdown(3);
   EXPECT_NO_THROW(b.swap(a));
+
+  element::set_swap_throw_countdown(1);
+  EXPECT_THROW(a.swap(b), std::runtime_error);
 }
 
 TEST_F(small_object_test, swap_big_and_small) {
