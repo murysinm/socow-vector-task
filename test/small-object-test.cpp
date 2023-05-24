@@ -529,19 +529,19 @@ TEST_F(small_object_test, reserve_small_into_big_throw) {
 TEST_F(small_object_test, reserve_big_into_small) {
   container a;
   a.reserve(5);
-  for (size_t i = 0; i < 3; ++i) {
+  for (size_t i = 0; i < 2; ++i) {
     a.push_back(i + 100);
   }
 
   container b = a;
   a.reserve(3);
 
-  ASSERT_EQ(3, a.size());
+  ASSERT_EQ(2, a.size());
   expect_static_storage(a);
-  ASSERT_EQ(3, b.size());
+  ASSERT_EQ(2, b.size());
   ASSERT_EQ(5, b.capacity());
 
-  for (size_t i = 0; i < 3; ++i) {
+  for (size_t i = 0; i < 2; ++i) {
     ASSERT_EQ(i + 100, a[i]);
     ASSERT_EQ(i + 100, b[i]);
   }
@@ -550,7 +550,7 @@ TEST_F(small_object_test, reserve_big_into_small) {
 TEST_F(small_object_test, reserve_big_into_small_throw) {
   container a;
   a.reserve(5);
-  for (size_t i = 0; i < 3; ++i) {
+  for (size_t i = 0; i < 2; ++i) {
     a.push_back(i + 100);
   }
 
