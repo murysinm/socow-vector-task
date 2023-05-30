@@ -773,6 +773,19 @@ TEST_F(small_object_test, swap_two_small) {
   EXPECT_EQ(3, b[0]);
 }
 
+TEST_F(small_object_test, swap_self) {
+  container a;
+  a.push_back(1);
+  a.push_back(2);
+
+  immutable_guard g(a);
+
+  element::reset_counters();
+  a.swap(a);
+  EXPECT_EQ(0, element::get_copy_counter());
+  EXPECT_EQ(0, element::get_swap_counter());
+}
+
 TEST_F(small_object_test, swap_two_small_throw) {
   socow_vector<element, 6> a;
   a.push_back(1);
