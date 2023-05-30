@@ -526,6 +526,16 @@ TEST_F(small_object_test, reserve_small_into_big_throw) {
   }
 }
 
+TEST_F(small_object_test, reserve_small_into_big_copies) {
+  container a;
+  a.push_back(3);
+  a.push_back(7);
+
+  element::reset_counters();
+  a.reserve(5);
+  EXPECT_GE(2, element::get_copy_counter() + element::get_swap_counter());
+}
+
 TEST_F(small_object_test, reserve_big_into_small) {
   container a;
   a.reserve(5);
@@ -559,6 +569,20 @@ TEST_F(small_object_test, reserve_big_into_small_throw) {
   immutable_guard g(a, b);
   element::set_copy_throw_countdown(2);
   EXPECT_THROW(a.reserve(3), std::runtime_error);
+}
+
+TEST_F(small_object_test, reserve_big_into_small_copies) {
+  container a;
+  a.reserve(5);
+  for (size_t i = 0; i < 2; ++i) {
+    a.push_back(i + 100);
+  }
+
+  container b = a;
+
+  element::reset_counters();
+  a.reserve(3);
+  EXPECT_GE(2, element::get_copy_counter() + element::get_swap_counter());
 }
 
 TEST_F(small_object_test, shrink_to_fit_empty) {
