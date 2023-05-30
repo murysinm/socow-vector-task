@@ -58,6 +58,24 @@ TEST_F(cow_test, copy_assignment) {
   EXPECT_EQ(0, element::get_swap_counter());
 }
 
+TEST_F(cow_test, copy_assignment_2) {
+  container a;
+  for (size_t i = 0; i < 10; ++i) {
+    a.push_back(i + 100);
+  }
+
+  container b;
+  for (size_t i = 0; i < 5; ++i) {
+    b.push_back(i + 200);
+  }
+
+  element::reset_counters();
+  b = a;
+  EXPECT_EQ(as_const(a).data(), as_const(b).data());
+  EXPECT_EQ(0, element::get_copy_counter());
+  EXPECT_EQ(0, element::get_swap_counter());
+}
+
 TEST_F(cow_test, copy_assignment_big_to_small) {
   container a;
   for (size_t i = 0; i < 5; ++i) {
