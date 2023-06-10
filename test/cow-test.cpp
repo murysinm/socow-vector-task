@@ -869,6 +869,24 @@ TEST_F(cow_test, erase_single_user) {
   EXPECT_EQ(old_data, as_const(a).data());
 }
 
+TEST_F(cow_test, erase_empty_multiple_users) {
+  constexpr size_t N = 5;
+
+  container a;
+  for (size_t i = 0; i < N; ++i) {
+    a.push_back(2 * i + 1);
+  }
+  container b = a;
+
+  element::reset_counters();
+
+  auto it = std::as_const(a).begin() + 3;
+  EXPECT_EQ(it, a.erase(it, it));
+
+  EXPECT_EQ(0, element::get_copy_counter());
+  EXPECT_EQ(0, element::get_swap_counter());
+}
+
 TEST_F(cow_test, erase_throw) {
   container a;
   for (size_t i = 0; i < 5; ++i) {
